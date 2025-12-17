@@ -100,14 +100,6 @@ class MainActivity : AppCompatActivity() {
         handler.postDelayed(gameLoop, GAME_TICK_MILLIS)
     }
 
-    private fun restartGame() {
-        handler.removeCallbacks(gameLoop)
-        gameManager.reset()
-        Utils.clearTrees(treeViews)
-        updateUi()
-        startGameLoop()
-    }
-
     private fun initViews() {
         heartViews = arrayOf(
             binding.heart1,

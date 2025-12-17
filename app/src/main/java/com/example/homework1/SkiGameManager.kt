@@ -21,9 +21,7 @@ class SkiGameManager(
 
     fun getPlayerLane(): Int = playerLane
     fun getLives(): Int = lives
-    fun getScore(): Int = score
     fun getMap(): Array<BooleanArray> = map
-    fun isGameOver(): Boolean = lives <= 0
 
     fun movePlayerLeft() {
         val firstLaneIndex = 0
