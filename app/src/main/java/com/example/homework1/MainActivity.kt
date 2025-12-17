@@ -1,6 +1,5 @@
 package com.example.homework1
 
-import com.example.homework1.TickResult
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
