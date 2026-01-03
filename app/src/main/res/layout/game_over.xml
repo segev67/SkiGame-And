@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Background snow image -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/img_snow_background"
+        android:scaleType="centerCrop"
+        android:contentDescription="game over background"
+        android:alpha="0.85" />
+
+    <!-- Centered card with scores and buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:padding="24dp"
+        android:layout_centerInParent="true"
+        android:background="#CC000000">
+
+        <TextView
+            android:id="@+id/txtGameOverTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Game Over"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/txtFinalScore"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Your score: 0"
+            android:textSize="20sp"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/txtBestScore"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Best score: 0"
+            android:textSize="18sp"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/txtDistance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Distance: 0"
+            android:textSize="18sp"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="24dp" />
+
+        <Button
+            android:id="@+id/btnPlayAgain"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Play Again"
+            android:layout_marginBottom="4dp" />
+
+        <Button
+            android:id="@+id/btnTopScores"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="View top scores"
+            android:layout_marginBottom="4dp"/>
+
+        <Button
+            android:id="@+id/btnBackToMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Back To Main Menu" />
+
+    </LinearLayout>
+
+</RelativeLayout>

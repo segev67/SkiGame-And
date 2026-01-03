@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".MenuActivity">
 
-    <!-- רקע -->
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -65,7 +64,7 @@
             android:id="@+id/btnHighScores"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="High scores" />
+            android:text="Top scores" />
 
     </LinearLayout>
 

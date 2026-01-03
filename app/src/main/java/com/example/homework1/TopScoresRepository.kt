@@ -6,9 +6,36 @@ import org.json.JSONObject
 
 object TopScoresRepository {
 
-    private const val PREFS_NAME = "top_scores_prefs"
+    private const val PREF_NAME = "top_scores_prefs"
     private const val KEY_SCORES = "scores_json"
     private const val MAX_SCORES = 10
+
+    fun getScores(context: Context): List<TopScore> {
+        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        val json = prefs.getString(KEY_SCORES, null) ?: return emptyList()
+
+        val list = mutableListOf<TopScore>()
+        try {
+            val array = JSONArray(json)
+            for (i in 0 until array.length()) {
+                val obj = array.getJSONObject(i)
+                val score = TopScore(
+                    playerName = obj.getString("playerName"),
+                    score = obj.getInt("score"),
+                    distance = obj.getInt("distance"),
+                    latitude = obj.optDouble("latitude", 0.0),
+                    longitude = obj.optDouble("longitude", 0.0),
+                )
+                list.add(score)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        //Always return sorted from high to low
+        return list.sortedWith(compareByDescending<TopScore> { it.score }
+            .thenByDescending { it.distance })
+    }
 
     fun addScore(
         context: Context,
@@ -18,49 +45,69 @@ object TopScoresRepository {
         latitude: Double,
         longitude: Double
     ) {
-        val scores = getScores(context).toMutableList()
-        scores.add(TopScore(playerName, score, distance, latitude, longitude))
+        val currentScores = getScores(context).toMutableList()
 
-        // sort top 10 scores from high to low
-        val sorted = scores.sortedByDescending { it.score }.take(MAX_SCORES)
+        //Create new score item
+        val newScore = TopScore(
+            playerName = playerName,
+            score = score,
+            distance = distance,
+            latitude = latitude,
+            longitude = longitude,
+        )
 
-        saveScores(context, sorted)
-    }
+        //If we have less than MAX_SCORES, just add it
+        if (currentScores.size < MAX_SCORES) {
+            currentScores.add(newScore)
+        } else {
+            //We already have MAX_SCORES entries
+            //Find the weakest score (last one because list is sorted descending)
+            val weakest = currentScores.last()
 
-    fun getScores(context: Context): List<TopScore> {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val json = prefs.getString(KEY_SCORES, null) ?: return emptyList()
+            // If new score is not better than the weakest, do nothing
+            val isBetter =
+                newScore.score > weakest.score //||
+                        //(newScore.score == weakest.score && newScore.distance > weakest.distance)
 
-        val arr = JSONArray(json)
-        val result = mutableListOf<TopScore>()
-        for (i in 0 until arr.length()) {
-            val obj = arr.getJSONObject(i)
-            result.add(
-                TopScore(
-                    playerName = obj.getString("playerName"),
-                    score = obj.getInt("score"),
-                    distance = obj.getInt("distance"),
-                    latitude = obj.getDouble("lat"),
-                    longitude = obj.getDouble("lng")
-                )
-            )
+            if (!isBetter) {
+                //Do not change the list at all
+                return
+            }
+
+            //Otherwise, add the new score
+            currentScores.add(newScore)
         }
-        return result
+
+        //Sort again (best first)
+        val sorted = currentScores.sortedWith(
+            compareByDescending<TopScore> { it.score }
+                .thenByDescending { it.distance }
+        )
+
+        //Keep only top MAX_SCORES
+        val top = sorted.take(MAX_SCORES)
+
+        //Save back to SharedPreferences as JSON
+        saveScores(context, top)
     }
 
     private fun saveScores(context: Context, scores: List<TopScore>) {
-        val arr = JSONArray()
-        scores.forEach { s ->
-            val obj = JSONObject()
-            obj.put("playerName", s.playerName)
-            obj.put("score", s.score)
-            obj.put("distance", s.distance)
-            obj.put("lat", s.latitude)
-            obj.put("lng", s.longitude)
-            arr.put(obj)
+        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        val array = JSONArray()
+
+        for (s in scores) {
+            val obj = JSONObject().apply {
+                put("playerName", s.playerName)
+                put("score", s.score)
+                put("distance", s.distance)
+                put("latitude", s.latitude)
+                put("longitude", s.longitude)
+            }
+            array.put(obj)
         }
 
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putString(KEY_SCORES, arr.toString()).apply()
+        prefs.edit()
+            .putString(KEY_SCORES, array.toString())
+            .apply()
     }
 }

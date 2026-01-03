@@ -16,10 +16,10 @@ class MenuActivity : AppCompatActivity() {
         binding = ActivityMenuBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Set initial UI state according to the current switch value
+        //Set initial UI state according to the current switch value
         updateFastModeUi(binding.switchSpeed.isChecked)
 
-        // Listen to switch changes (Fast mode ON / OFF)
+        //Listen to switch changes (Fast mode ON / OFF)
         binding.switchSpeed.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 Toast.makeText(this, "Fast mode ON", Toast.LENGTH_SHORT).show()
@@ -29,7 +29,7 @@ class MenuActivity : AppCompatActivity() {
             updateFastModeUi(isChecked)
         }
 
-        // Play with buttons mode (speed depends on switch)
+        //Play with buttons mode (speed depends on switch)
         binding.btnPlayButton.setOnClickListener {
             val mode = if (binding.switchSpeed.isChecked) {
                 GameMode.BUTTON_FAST
@@ -39,25 +39,25 @@ class MenuActivity : AppCompatActivity() {
             startGame(mode)
         }
 
-        // Play with sensor mode
+        //Play with sensor mode
         binding.btnPlaySensor.setOnClickListener {
             startGame(GameMode.SENSOR)
         }
 
-        // Go to Top Scores screen
+        //Go to Top Scores screen
         binding.btnHighScores.setOnClickListener {
             startActivity(Intent(this, TopScoresActivity::class.java))
         }
     }
 
-    // Helper to start the game with a given mode
+    //Helper to start the game with a given mode
     private fun startGame(mode: GameMode) {
         val intent = Intent(this, MainActivity::class.java)
         intent.putExtra("GAME_MODE", mode.name)
         startActivity(intent)
     }
 
-    // Update label color according to Fast/Slow mode
+    //Update label color according to Fast/Slow mode
     private fun updateFastModeUi(isFast: Boolean) {
         if (isFast) {
             binding.txtFastModeLabel.setTextColor(Color.RED)

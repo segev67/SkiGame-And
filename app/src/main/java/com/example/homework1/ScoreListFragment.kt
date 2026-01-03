@@ -39,18 +39,18 @@ class ScoreListFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        // upload the top scores from the repository
+        //upload the top scores from the repository
         val ctx = requireContext()
         scores = TopScoresRepository.getScores(ctx)
 
-        // Score + Distance each line
+        //Score + Distance each line
         val items = scores.mapIndexed { index, s ->
             "${index + 1}. ${s.playerName} - Score: ${s.score}, Dist: ${s.distance}m"
         }
 
         val adapter = ArrayAdapter(
             requireContext(),
-            android.R.layout.simple_list_item_1,
+            R.layout.item_score_row,
             items
         )
         listView.adapter = adapter

@@ -3,9 +3,13 @@ package com.example.homework1
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.widget.Button
+import android.widget.TextView
 import android.view.View
 import android.widget.Toast
 import android.widget.ImageView
+import android.content.Intent
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.homework1.databinding.ActivityMainBinding
 
@@ -25,7 +29,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var handler: Handler
     private lateinit var gameMode: GameMode
-
     private val gameLoop = object : Runnable {
         override fun run() {
             val result = gameManager.tick()
@@ -33,17 +36,20 @@ class MainActivity : AppCompatActivity() {
 
             when (result) {
                 TickResult.NONE -> {
+                    //No special event, just continue
                 }
 
                 TickResult.CRASH -> {
-                    //Crash but still has lives
+                    //Player crashed but still has lives
                     Toast.makeText(this@MainActivity, "Crash!", Toast.LENGTH_SHORT).show()
                 }
 
                 TickResult.GAME_OVER -> {
+                    //Game over - compute final stats
                     val finalScore = gameManager.getScore()
                     val finalDistance = gameManager.getDistance()
 
+                    //Save to top scores
                     TopScoresRepository.addScore(
                         context = this@MainActivity,
                         playerName = "Player",
@@ -53,17 +59,18 @@ class MainActivity : AppCompatActivity() {
                         longitude = 34.7818
                     )
 
-                    Toast.makeText(this@MainActivity, "Game Over", Toast.LENGTH_SHORT).show()
-
-                    gameManager.reset()
-                    Utils.clearTrees(treeViews)
-                    updateUi()
+                    //Show game over dialog (do NOT restart immediately)
+                    showGameOverDialog(finalScore, finalDistance)
                 }
             }
 
-            handler.postDelayed(this, gameTickMillis)
+            //Only continue the loop if the game is not over
+            if (result != TickResult.GAME_OVER) {
+                handler.postDelayed(this, gameTickMillis)
+            }
         }
     }
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -173,6 +180,62 @@ class MainActivity : AppCompatActivity() {
         Utils.updateHearts(heartViews, gameManager.getLives())
         Utils.updateScore(binding.txtScore, gameManager.getScore())
         Utils.updateOdometer(binding.txtOdometer, gameManager.getDistance())
+    }
+
+    private fun showGameOverDialog(finalScore: Int, finalDistance: Int) {
+        // Get best score from repository
+        val scores = TopScoresRepository.getScores(this)
+        val bestScore = scores.maxOfOrNull { it.score } ?: finalScore
+
+        // Inflate custom layout for the dialog
+        val dialogView = layoutInflater.inflate(R.layout.game_over, null)
+
+        val txtTitle = dialogView.findViewById<TextView>(R.id.txtGameOverTitle)
+        val txtFinalScore = dialogView.findViewById<TextView>(R.id.txtFinalScore)
+        val txtBestScore = dialogView.findViewById<TextView>(R.id.txtBestScore)
+        val txtDistance = dialogView.findViewById<TextView>(R.id.txtDistance)
+        val btnPlayAgain = dialogView.findViewById<Button>(R.id.btnPlayAgain)
+        val btnTopScores = dialogView.findViewById<Button>(R.id.btnTopScores)
+        val btnBackToMenu = dialogView.findViewById<Button>(R.id.btnBackToMenu)
+
+        // Set texts
+        txtTitle.text = "Game Over"
+        txtFinalScore.text = "Your score: $finalScore"
+        txtBestScore.text = "Best score: $bestScore"
+        txtDistance.text = "Distance: $finalDistance"
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(false) // user must choose what to do
+            .create()
+
+        // Play again: reset game and restart loop
+        btnPlayAgain.setOnClickListener {
+            dialog.dismiss()
+            gameManager.reset()
+            Utils.clearTrees(treeViews)
+            updateUi()
+            startGameLoop()
+        }
+
+        // View top scores: open TopScoresActivity
+        btnTopScores.setOnClickListener {
+            dialog.dismiss()
+            val intent = Intent(this, TopScoresActivity::class.java)
+            startActivity(intent)
+        }
+
+        // Back to main menu: go back to MenuActivity
+        btnBackToMenu.setOnClickListener {
+            dialog.dismiss()
+            val intent = Intent(this, MenuActivity::class.java)
+            // Clear this activity from the back stack so back won't return here
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
+            finish() // finish MainActivity
+        }
+
+        dialog.show()
     }
 }
 

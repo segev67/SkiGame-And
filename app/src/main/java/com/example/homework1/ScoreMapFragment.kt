@@ -21,7 +21,7 @@ class ScoreMapFragment : Fragment() {
         return view
     }
 
-    // readed from HighScoresActivity wehn click on row
+    //read from HighScoresActivity wehn click on row
     fun showLocation(score: TopScore) {
         txtMapInfo.text =
             "Location for ${score.playerName}\n" +
