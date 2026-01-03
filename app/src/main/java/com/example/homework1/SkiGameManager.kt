@@ -6,6 +6,13 @@ enum class TickResult {
     CRASH,
     GAME_OVER
 }
+
+enum class CellType {
+    EMPTY,
+    TREE,
+    COIN
+}
+
 class SkiGameManager(
     private val numRows: Int,
     private val numCols: Int,
@@ -13,15 +20,22 @@ class SkiGameManager(
 ) {
 
     private var playerLane = numCols / 2
-    private val map: Array<BooleanArray> =
-        Array(numRows) { BooleanArray(numCols) { false } }
+    private val map: Array<Array<CellType>> =
+        Array(numRows) { Array(numCols) { CellType.EMPTY } }
 
     private var lives = initialLives
-    private var score = 0
+    //private var survivalPoints = 0
+    var coinValue = 10
+        private  set
+    private var coins = 0
+    private var distance = 0
 
     fun getPlayerLane(): Int = playerLane
     fun getLives(): Int = lives
-    fun getMap(): Array<BooleanArray> = map
+    fun getMap(): Array<Array<CellType>> = map
+    fun getCoins(): Int = coins
+    fun getScore(): Int = coins * coinValue
+    fun getDistance(): Int = distance
 
     fun movePlayerLeft() {
         val firstLaneIndex = 0
@@ -56,50 +70,76 @@ class SkiGameManager(
 
         //Clear top row
         for (col in 0 until numCols) {
-            map[0][col] = false
+            map[0][col] = CellType.EMPTY
         }
 
-        //Decide if create an obstacle in this row
-        val shouldCreateObstacle = (0..1).random() == 1  // 50% chance
+        //Decide if create an obstacle or coin in this row
+        val shouldCreateObstacle = (0..1).random() == 1 //50% chance
         if (shouldCreateObstacle) {
             val laneIndex = (0 until numCols).random()
-            map[0][laneIndex] = true
+            val isCoin = (0..4).random() == 0           //20% chance its a coin, otherwise is tree.
+            if (isCoin) {
+                map[0][laneIndex] = CellType.COIN
+            }
+            else {
+                map[0][laneIndex] = CellType.TREE
+            }
         }
 
-        return checkCollision()
+        val result = checkCollision()
+        distance++
+        return result
     }
 
     //Checks collision on the last row and updates lives/score.
 
     private fun checkCollision(): TickResult {
         val lastRowIndex = numRows - 1
+        val cell = map[lastRowIndex][playerLane]
 
-        return if (map[lastRowIndex][playerLane]) {
-            // Player hits a tree
-            lives--
-            map[lastRowIndex][playerLane] = false
+        return when (cell){
+            CellType.TREE -> {
+                //player hits obstacle
+                lives--
+                map[lastRowIndex][playerLane] = CellType.EMPTY
 
-            if (lives <= 0) {
-                TickResult.GAME_OVER
-            } else {
-                TickResult.CRASH
+                if (lives <= 0) {
+                    TickResult.GAME_OVER
+                }
+                else {
+                    TickResult.CRASH
+                }
             }
-        } else {
-            //No collision, just increase score
-            score++
-            TickResult.NONE
+
+            CellType.COIN -> {
+                //Every tick we get a point
+                //survivalPoints++
+                //Player collects a coin
+                coins++
+                //Clean cell in the map
+                map[lastRowIndex][playerLane] = CellType.EMPTY
+                TickResult.NONE
+            }
+
+            CellType.EMPTY -> {
+                //We didnt hit obstacle or coin
+                //survivalPoints++
+                TickResult.NONE
+            }
         }
     }
 
     fun reset() {
         for (row in 0 until numRows) {
             for (col in 0 until numCols) {
-                map[row][col] = false
+                map[row][col] = CellType.EMPTY
             }
         }
 
         lives = initialLives
-        score = 0
+        //survivalPoints = 0
+        distance = 0
+        coins = 0
         playerLane = numCols / 2
     }
 }

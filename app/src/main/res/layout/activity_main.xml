@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
@@ -11,55 +12,90 @@
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
         android:contentDescription="background image"
-        android:src="@drawable/img_snow_background"/>
+        android:src="@drawable/img_snow_background"
+        android:alpha="0.8"/>
 
     <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="12dp"
-        android:gravity="center_vertical">
-        
-        <ImageView
-            android:id="@+id/heart1"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:src="@drawable/ic_heart"
-            />
-
-        <ImageView
-            android:id="@+id/heart2"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:src="@drawable/ic_heart"
-            />
-
-        <ImageView
-            android:id="@+id/heart3"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:src="@drawable/ic_heart"
-            />
-        
-        
-    </LinearLayout>
-
-
-    <LinearLayout
+        android:id="@+id/hudContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_alignParentTop="true"
+        android:padding="8dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="start|center_vertical">
+
+            <ImageView
+                android:id="@+id/heart1"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_heart" />
+
+            <ImageView
+                android:id="@+id/heart2"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:src="@drawable/ic_heart" />
+
+            <ImageView
+                android:id="@+id/heart3"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:src="@drawable/ic_heart" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="4dp">
+
+
+            <TextView
+                android:id="@+id/txtOdometer"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="start"
+                android:layout_marginLeft="40dp"
+                android:text="Distance: 0"
+                android:textSize="25sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black" />
+
+            <TextView
+                android:id="@+id/txtScore"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:layout_marginEnd="40dp"
+                android:text="Score: 0"
+                android:textSize="25sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black" />
+
+        </LinearLayout>
+
+    </LinearLayout>
 
         <LinearLayout
             android:id="@+id/roadsContainer"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="100"
+            android:layout_below="@id/hudContainer"
+            android:layout_alignParentBottom="true"
+            android:layout_marginTop="0dp"
             android:orientation="horizontal"
-            android:layout_margin="32dp">
+            android:layout_margin="48dp">
 
             <LinearLayout
                 android:id="@+id/road0"
@@ -95,6 +131,52 @@
                     android:adjustViewBounds="true"
                     android:src="@drawable/img_tree"
                     />
+
+                <ImageView
+                    android:id="@+id/imgTree30"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree40"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree50"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree60"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree70"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
                 <ImageView
                     android:id="@+id/imgSkier0"
                     android:layout_width="wrap_content"
@@ -134,6 +216,51 @@
 
                 <ImageView
                     android:id="@+id/imgTree21"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree31"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree41"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree51"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree61"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree71"
                     android:layout_width="wrap_content"
                     android:layout_height="0dp"
                     android:layout_weight="1"
@@ -187,7 +314,230 @@
                     />
 
                 <ImageView
+                    android:id="@+id/imgTree32"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree42"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree52"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree62"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree72"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
                     android:id="@+id/imgSkier2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_skier"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/road3"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <ImageView
+                    android:id="@+id/imgTree03"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree13"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree23"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree33"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree43"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree53"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree63"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree73"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgSkier3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_skier"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/road4"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <ImageView
+                    android:id="@+id/imgTree04"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree14"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree24"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree34"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree44"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree54"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree64"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgTree74"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/img_tree"
+                    />
+
+                <ImageView
+                    android:id="@+id/imgSkier4"
                     android:layout_width="wrap_content"
                     android:layout_height="0dp"
                     android:layout_weight="1"
@@ -197,6 +547,7 @@
 
         </LinearLayout>
 
+
 <!--       <RelativeLayout-->
 <!--           android:layout_width="match_parent"-->
 <!--           android:layout_height="wrap_content"-->
@@ -204,7 +555,7 @@
 <!--       </RelativeLayout>-->
 
 
-    </LinearLayout>
+
 
 
 

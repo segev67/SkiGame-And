@@ -2,6 +2,8 @@ package com.example.homework1
 
 import android.view.View
 import android.widget.ImageView
+import android.widget.TextView
+
 
 object Utils {
 
@@ -15,12 +17,26 @@ object Utils {
 
     fun updateTrees(
         treeViews: Array<Array<ImageView>>,
-        map: Array<BooleanArray>
+        map: Array<Array<CellType>>
     ) {
         for (rowIndex in treeViews.indices) {
             for (colIndex in treeViews[rowIndex].indices) {
-                treeViews[rowIndex][colIndex].visibility =
-                    if (map[rowIndex][colIndex]) View.VISIBLE else View.INVISIBLE
+                val cell = map[rowIndex][colIndex]
+                val view = treeViews[rowIndex][colIndex]
+
+                when (cell) {
+                    CellType.EMPTY -> {
+                        view.visibility = View.INVISIBLE
+                    }
+                    CellType.TREE -> {
+                        view.visibility = View.VISIBLE
+                        view.setImageResource(R.drawable.img_tree)
+                    }
+                    CellType.COIN -> {
+                        view.visibility = View.VISIBLE
+                        view.setImageResource(R.drawable.ic_coin)
+                    }
+                }
             }
         }
     }
@@ -44,5 +60,19 @@ object Utils {
             imageView.visibility =
                 if (lives >= lifeNumber) View.VISIBLE else View.INVISIBLE
         }
+    }
+
+    fun updateScore(
+        scoreView: TextView,
+        score: Int
+    ) {
+        scoreView.text = "Score: $score"
+    }
+
+    fun updateOdometer(
+        odometerView: TextView,
+        distance: Int
+    ) {
+        odometerView.text = "Distance: $distance"
     }
 }

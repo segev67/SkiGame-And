@@ -3,6 +3,7 @@ package com.example.homework1
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.View
 import android.widget.Toast
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
@@ -12,7 +13,7 @@ import com.example.homework1.databinding.ActivityMainBinding
 class MainActivity : AppCompatActivity() {
 
     companion object {
-        private const val GAME_TICK_MILLIS = 1000L  // 1 second per tick
+        private var gameTickMillis: Long = 1000L  // 1 second per tick
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -23,6 +24,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var heartViews: Array<ImageView>
 
     private lateinit var handler: Handler
+    private lateinit var gameMode: GameMode
 
     private val gameLoop = object : Runnable {
         override fun run() {
@@ -39,7 +41,18 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 TickResult.GAME_OVER -> {
-                    //Last life lost: show ONLY Game Over
+                    val finalScore = gameManager.getScore()
+                    val finalDistance = gameManager.getDistance()
+
+                    TopScoresRepository.addScore(
+                        context = this@MainActivity,
+                        playerName = "Player",
+                        score = finalScore,
+                        distance = finalDistance,
+                        latitude = 32.0853,
+                        longitude = 34.7818
+                    )
+
                     Toast.makeText(this@MainActivity, "Game Over", Toast.LENGTH_SHORT).show()
 
                     gameManager.reset()
@@ -48,7 +61,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            handler.postDelayed(this, GAME_TICK_MILLIS)
+            handler.postDelayed(this, gameTickMillis)
         }
     }
 
@@ -61,6 +74,26 @@ class MainActivity : AppCompatActivity() {
         handler = Handler(Looper.getMainLooper())
 
         initViews()
+
+        // Read game mode from Intent (default: BUTTON_SLOW)
+        val modeFromIntent = intent.getStringExtra("GAME_MODE") ?: GameMode.BUTTON_SLOW.name
+        gameMode = GameMode.valueOf(modeFromIntent)
+
+        // Set tick speed according to game mode
+        gameTickMillis = when (gameMode) {
+            GameMode.BUTTON_SLOW -> 1000L   // slow
+            GameMode.BUTTON_FAST -> 500L    // fast
+            GameMode.SENSOR      -> 800L
+        }
+
+        // (Sensor logic will be added later)
+        if (gameMode == GameMode.SENSOR) {
+            binding.btnLeft.visibility = View.GONE
+            binding.btnRight.visibility = View.GONE
+        } else {
+            binding.btnLeft.visibility = View.VISIBLE
+            binding.btnRight.visibility = View.VISIBLE
+        }
 
         val numberOfRows = treeViews.size
         val numberOfCols = treeViews[0].size
@@ -75,15 +108,23 @@ class MainActivity : AppCompatActivity() {
         Utils.clearTrees(treeViews)
         Utils.updateSkier(skierViews, gameManager.getPlayerLane())
         Utils.updateHearts(heartViews, gameManager.getLives())
+        Utils.updateScore(binding.txtScore, gameManager.getScore())
+        Utils.updateOdometer(binding.txtOdometer, gameManager.getDistance())
 
+        // Left button (buttons mode only)
         binding.btnLeft.setOnClickListener {
-            gameManager.movePlayerLeft()
-            Utils.updateSkier(skierViews, gameManager.getPlayerLane())
+            if (gameMode != GameMode.SENSOR) {
+                gameManager.movePlayerLeft()
+                Utils.updateSkier(skierViews, gameManager.getPlayerLane())
+            }
         }
 
+        // Right button (buttons mode only)
         binding.btnRight.setOnClickListener {
-            gameManager.movePlayerRight()
-            Utils.updateSkier(skierViews, gameManager.getPlayerLane())
+            if (gameMode != GameMode.SENSOR) {
+                gameManager.movePlayerRight()
+                Utils.updateSkier(skierViews, gameManager.getPlayerLane())
+            }
         }
 
         startGameLoop()
@@ -96,7 +137,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startGameLoop() {
         handler.removeCallbacks(gameLoop)
-        handler.postDelayed(gameLoop, GAME_TICK_MILLIS)
+        handler.postDelayed(gameLoop, gameTickMillis)
     }
 
     private fun initViews() {
@@ -107,15 +148,22 @@ class MainActivity : AppCompatActivity() {
         )
 
         treeViews = arrayOf(
-            arrayOf(binding.imgTree00, binding.imgTree01, binding.imgTree02),
-            arrayOf(binding.imgTree10, binding.imgTree11, binding.imgTree12),
-            arrayOf(binding.imgTree20, binding.imgTree21, binding.imgTree22)
+            arrayOf(binding.imgTree00, binding.imgTree01, binding.imgTree02, binding.imgTree03, binding.imgTree04),
+            arrayOf(binding.imgTree10, binding.imgTree11, binding.imgTree12, binding.imgTree13, binding.imgTree14),
+            arrayOf(binding.imgTree20, binding.imgTree21, binding.imgTree22, binding.imgTree23, binding.imgTree24),
+            arrayOf(binding.imgTree30, binding.imgTree31, binding.imgTree32, binding.imgTree33, binding.imgTree34),
+            arrayOf(binding.imgTree40, binding.imgTree41, binding.imgTree42, binding.imgTree43, binding.imgTree44),
+            arrayOf(binding.imgTree50, binding.imgTree51, binding.imgTree52, binding.imgTree53, binding.imgTree54),
+            arrayOf(binding.imgTree60, binding.imgTree61, binding.imgTree62, binding.imgTree63, binding.imgTree64),
+            arrayOf(binding.imgTree70, binding.imgTree71, binding.imgTree72, binding.imgTree73, binding.imgTree74)
         )
 
         skierViews = arrayOf(
             binding.imgSkier0,
             binding.imgSkier1,
-            binding.imgSkier2
+            binding.imgSkier2,
+            binding.imgSkier3,
+            binding.imgSkier4
         )
     }
 
@@ -123,6 +171,8 @@ class MainActivity : AppCompatActivity() {
         Utils.updateTrees(treeViews, gameManager.getMap())
         Utils.updateSkier(skierViews, gameManager.getPlayerLane())
         Utils.updateHearts(heartViews, gameManager.getLives())
+        Utils.updateScore(binding.txtScore, gameManager.getScore())
+        Utils.updateOdometer(binding.txtOdometer, gameManager.getDistance())
     }
 }
 

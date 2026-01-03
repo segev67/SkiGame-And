@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/menu"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MenuActivity">
+
+    <!-- רקע -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/img_snow_background"
+        android:scaleType="centerCrop"
+        android:contentDescription="background"
+        android:alpha="0.8" />
+
+    <LinearLayout
+        android:id="@+id/menuContent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:padding="24dp"
+        android:layout_centerInParent="true"
+        android:background="#80000000">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="24dp">
+
+            <TextView
+                android:id="@+id/txtFastModeLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Fast Mode:"
+                android:textSize="18sp"
+                android:textColor="@android:color/white"
+                android:layout_marginEnd="12dp" />
+
+            <Switch
+                android:id="@+id/switchSpeed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnPlayButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Play"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/btnPlaySensor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Play Sensor Mode"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/btnHighScores"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="High scores" />
+
+    </LinearLayout>
+
+</RelativeLayout>
