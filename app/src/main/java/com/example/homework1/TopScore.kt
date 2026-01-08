@@ -5,5 +5,6 @@ data class TopScore(
     val score: Int,
     val distance: Int,
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
+    val hasLocation: Boolean = false //Default location exist
 )

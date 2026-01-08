@@ -12,12 +12,19 @@ import android.content.Intent
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.homework1.databinding.ActivityMainBinding
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 
 
 class MainActivity : AppCompatActivity() {
 
     companion object {
-        private var gameTickMillis: Long = 1000L  // 1 second per tick
+        private var gameTickMillis: Long = 1000L  //one second per tick
+        private const val LOCATION_REQUEST_CODE = 1001
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -29,6 +36,10 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var handler: Handler
     private lateinit var gameMode: GameMode
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+
+    private var pendingScoreToSave: Pair<Int, Int>? = null // (score, distance)
+
     private val gameLoop = object : Runnable {
         override fun run() {
             val result = gameManager.tick()
@@ -45,21 +56,13 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 TickResult.GAME_OVER -> {
-                    //Game over - compute final stats
+                    //Game over, compute final stats
                     val finalScore = gameManager.getScore()
                     val finalDistance = gameManager.getDistance()
 
-                    //Save to top scores
-                    TopScoresRepository.addScore(
-                        context = this@MainActivity,
-                        playerName = "Player",
-                        score = finalScore,
-                        distance = finalDistance,
-                        latitude = 32.0853,
-                        longitude = 34.7818
-                    )
+                    saveScoreWithLocation(finalScore, finalDistance)
 
-                    //Show game over dialog (do NOT restart immediately)
+                    //Show game over dialog
                     showGameOverDialog(finalScore, finalDistance)
                 }
             }
@@ -78,22 +81,23 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         handler = Handler(Looper.getMainLooper())
 
         initViews()
 
-        // Read game mode from Intent (default: BUTTON_SLOW)
+        //Read game mode from Intent (default: BUTTON_SLOW)
         val modeFromIntent = intent.getStringExtra("GAME_MODE") ?: GameMode.BUTTON_SLOW.name
         gameMode = GameMode.valueOf(modeFromIntent)
 
-        // Set tick speed according to game mode
+        //Set tick speed according to game mode
         gameTickMillis = when (gameMode) {
             GameMode.BUTTON_SLOW -> 1000L   // slow
             GameMode.BUTTON_FAST -> 500L    // fast
             GameMode.SENSOR      -> 800L
         }
 
-        // (Sensor logic will be added later)
+        //(Sensor logic will be added later)
         if (gameMode == GameMode.SENSOR) {
             binding.btnLeft.visibility = View.GONE
             binding.btnRight.visibility = View.GONE
@@ -126,7 +130,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Right button (buttons mode only)
+        //Right button (buttons mode only)
         binding.btnRight.setOnClickListener {
             if (gameMode != GameMode.SENSOR) {
                 gameManager.movePlayerRight()
@@ -141,6 +145,16 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         handler.removeCallbacks(gameLoop)
     }
+
+    override fun onPause() {
+        super.onPause()
+        handler.removeCallbacks(gameLoop)
+    }
+
+//    override fun onResume() {
+//        super.onResume()
+//        startGameLoop()
+//    }
 
     private fun startGameLoop() {
         handler.removeCallbacks(gameLoop)
@@ -187,7 +201,7 @@ class MainActivity : AppCompatActivity() {
         val scores = TopScoresRepository.getScores(this)
         val bestScore = scores.maxOfOrNull { it.score } ?: finalScore
 
-        // Inflate custom layout for the dialog
+        //Inflate custom layout for the dialog
         val dialogView = layoutInflater.inflate(R.layout.game_over, null)
 
         val txtTitle = dialogView.findViewById<TextView>(R.id.txtGameOverTitle)
@@ -198,7 +212,7 @@ class MainActivity : AppCompatActivity() {
         val btnTopScores = dialogView.findViewById<Button>(R.id.btnTopScores)
         val btnBackToMenu = dialogView.findViewById<Button>(R.id.btnBackToMenu)
 
-        // Set texts
+        //Set texts
         txtTitle.text = "Game Over"
         txtFinalScore.text = "Your score: $finalScore"
         txtBestScore.text = "Best score: $bestScore"
@@ -209,7 +223,7 @@ class MainActivity : AppCompatActivity() {
             .setCancelable(false) // user must choose what to do
             .create()
 
-        // Play again: reset game and restart loop
+        //Play again: reset game and restart loop
         btnPlayAgain.setOnClickListener {
             dialog.dismiss()
             gameManager.reset()
@@ -218,16 +232,18 @@ class MainActivity : AppCompatActivity() {
             startGameLoop()
         }
 
-        // View top scores: open TopScoresActivity
+        //View top scores: open TopScoresActivity
         btnTopScores.setOnClickListener {
             dialog.dismiss()
+            handler.removeCallbacks(gameLoop)
             val intent = Intent(this, TopScoresActivity::class.java)
             startActivity(intent)
         }
 
-        // Back to main menu: go back to MenuActivity
+        //Back to main menu: go back to MenuActivity
         btnBackToMenu.setOnClickListener {
             dialog.dismiss()
+            handler.removeCallbacks(gameLoop)
             val intent = Intent(this, MenuActivity::class.java)
             // Clear this activity from the back stack so back won't return here
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -237,5 +253,80 @@ class MainActivity : AppCompatActivity() {
 
         dialog.show()
     }
+
+    @SuppressLint("MissingPermission")
+    private fun saveScoreWithLocation(finalScore: Int, finalDistance: Int) {
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            pendingScoreToSave = finalScore to finalDistance
+            requestLocationPermission.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            return
+        }
+
+        val tokenSource = com.google.android.gms.tasks.CancellationTokenSource()
+
+        fusedLocationClient.getCurrentLocation(
+            com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY,
+            tokenSource.token
+        ).addOnSuccessListener { location ->
+            val hasLocationFlag = (location != null)
+            val lat = location?.latitude ?: 0.0
+            val lng = location?.longitude ?: 0.0
+
+            // Debug log (important!)
+            android.util.Log.d("LOC", "getCurrentLocation lat=$lat lng=$lng has=$hasLocationFlag")
+
+            TopScoresRepository.addScore(
+                context = this,
+                playerName = "Player",
+                score = finalScore,
+                distance = finalDistance,
+                latitude = lat,
+                longitude = lng,
+                hasLocation = hasLocationFlag
+            )
+        }.addOnFailureListener { e ->
+            android.util.Log.e("LOC", "getCurrentLocation failed", e)
+
+            TopScoresRepository.addScore(
+                context = this,
+                playerName = "Player",
+                score = finalScore,
+                distance = finalDistance,
+                latitude = 0.0,
+                longitude = 0.0,
+                hasLocation = false
+            )
+        }
+    }
+
+    private val requestLocationPermission =
+        registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { granted ->
+
+            val pending = pendingScoreToSave
+            pendingScoreToSave = null
+
+            if (pending == null) return@registerForActivityResult
+
+            val (score, distance) = pending
+
+            if (granted) {
+                //Permission granted
+                saveScoreWithLocation(score, distance)
+            } else {
+                //Permission denied, saving without location
+                TopScoresRepository.addScore(
+                    context = this,
+                    playerName = "Player",
+                    score = score,
+                    distance = distance,
+                    latitude = 0.0,
+                    longitude = 0.0,
+                    hasLocation = false
+                )
+            }
+        }
 }
 

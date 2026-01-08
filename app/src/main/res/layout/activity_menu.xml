@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/menu"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -36,14 +37,22 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Fast Mode:"
+                android:textStyle="bold"
                 android:textSize="18sp"
                 android:textColor="@android:color/white"
                 android:layout_marginEnd="12dp" />
 
-            <Switch
+            <com.google.android.material.switchmaterial.SwitchMaterial
                 android:id="@+id/switchSpeed"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="48dp"
+                android:minWidth="48dp"
+                android:minHeight="48dp"
+                android:padding="8dp"
+                app:thumbTint="@color/switch_color"
+                app:trackTint="@color/switch_track_color"
+                style="@style/Widget.MaterialComponents.CompoundButton.Switch" />
+
         </LinearLayout>
 
         <Button

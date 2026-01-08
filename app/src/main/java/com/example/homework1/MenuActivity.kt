@@ -60,7 +60,7 @@ class MenuActivity : AppCompatActivity() {
     //Update label color according to Fast/Slow mode
     private fun updateFastModeUi(isFast: Boolean) {
         if (isFast) {
-            binding.txtFastModeLabel.setTextColor(Color.RED)
+            binding.txtFastModeLabel.setTextColor(Color.GREEN)
         } else {
             binding.txtFastModeLabel.setTextColor(Color.WHITE)
         }

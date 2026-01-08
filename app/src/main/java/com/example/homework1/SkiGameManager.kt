@@ -56,7 +56,6 @@ class SkiGameManager(
      * - Move obstacles down
      * - Create at most one obstacle in the top row
      * - Check for collision
-     * @return TickResult describing what happened in this tick.
      */
     fun tick(): TickResult {
         val lastRowIndex = numRows - 1
@@ -137,7 +136,6 @@ class SkiGameManager(
         }
 
         lives = initialLives
-        //survivalPoints = 0
         distance = 0
         coins = 0
         playerLane = numCols / 2

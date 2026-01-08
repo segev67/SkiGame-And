@@ -1,6 +1,5 @@
 package com.example.homework1
 
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,23 +8,16 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import androidx.fragment.app.Fragment
+import com.example.homework1.interfaces.Callback_TopScoreClicked
 
 class ScoreListFragment : Fragment() {
 
-    interface ScoreClickListener {
-        fun onScoreSelected(score: TopScore)
+    companion object {
+        var topScoreItemClicked: Callback_TopScoreClicked? = null
     }
 
-    private var listener: ScoreClickListener? = null
     private lateinit var listView: ListView
     private var scores: List<TopScore> = emptyList()
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        if (context is ScoreClickListener) {
-            listener = context
-        }
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,11 +31,11 @@ class ScoreListFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        //upload the top scores from the repository
+        //Load the top scores from repository
         val ctx = requireContext()
         scores = TopScoresRepository.getScores(ctx)
 
-        //Score + Distance each line
+        //Build text for each row: index + player name + score + distance
         val items = scores.mapIndexed { index, s ->
             "${index + 1}. ${s.playerName} - Score: ${s.score}, Dist: ${s.distance}m"
         }
@@ -55,10 +47,15 @@ class ScoreListFragment : Fragment() {
         )
         listView.adapter = adapter
 
+        //When user clicks on row – trigger callback
         listView.onItemClickListener =
-            AdapterView.OnItemClickListener { _, _, position, _ ->
+            AdapterView.OnItemClickListener { parent, view, position, id ->
+
                 val score = scores[position]
-                listener?.onScoreSelected(score)
+
+                //Trigger callback (notify activity)
+                topScoreItemClicked?.topScoreItemClicked(score)
             }
+
     }
 }

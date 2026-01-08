@@ -25,6 +25,7 @@ object TopScoresRepository {
                     distance = obj.getInt("distance"),
                     latitude = obj.optDouble("latitude", 0.0),
                     longitude = obj.optDouble("longitude", 0.0),
+                    hasLocation = obj.optBoolean("hasLocation", false)
                 )
                 list.add(score)
             }
@@ -43,7 +44,8 @@ object TopScoresRepository {
         score: Int,
         distance: Int,
         latitude: Double,
-        longitude: Double
+        longitude: Double,
+        hasLocation: Boolean
     ) {
         val currentScores = getScores(context).toMutableList()
 
@@ -54,6 +56,7 @@ object TopScoresRepository {
             distance = distance,
             latitude = latitude,
             longitude = longitude,
+            hasLocation = hasLocation
         )
 
         //If we have less than MAX_SCORES, just add it
@@ -64,7 +67,7 @@ object TopScoresRepository {
             //Find the weakest score (last one because list is sorted descending)
             val weakest = currentScores.last()
 
-            // If new score is not better than the weakest, do nothing
+            //If new score is not better than the weakest, do nothing
             val isBetter =
                 newScore.score > weakest.score //||
                         //(newScore.score == weakest.score && newScore.distance > weakest.distance)
@@ -102,6 +105,7 @@ object TopScoresRepository {
                 put("distance", s.distance)
                 put("latitude", s.latitude)
                 put("longitude", s.longitude)
+                put("hasLocation", s.hasLocation)
             }
             array.put(obj)
         }
