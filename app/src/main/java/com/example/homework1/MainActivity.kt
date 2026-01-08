@@ -24,7 +24,6 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private var gameTickMillis: Long = 1000L  //one second per tick
-        private const val LOCATION_REQUEST_CODE = 1001
     }
 
     private lateinit var binding: ActivityMainBinding

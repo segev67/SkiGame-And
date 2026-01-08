@@ -33,7 +33,6 @@ class SkiGameManager(
     fun getPlayerLane(): Int = playerLane
     fun getLives(): Int = lives
     fun getMap(): Array<Array<CellType>> = map
-    fun getCoins(): Int = coins
     fun getScore(): Int = coins * coinValue
     fun getDistance(): Int = distance
 
