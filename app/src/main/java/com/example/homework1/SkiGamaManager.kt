@@ -1,4 +1,5 @@
 package com.example.homework1
+import com.example.homework1.utilities.GameConfig
 
 
 enum class TickResult {
@@ -16,7 +17,7 @@ enum class CellType {
 class SkiGameManager(
     private val numRows: Int,
     private val numCols: Int,
-    private val initialLives: Int
+    initialLives: Int
 ) {
 
     private var playerLane = numCols / 2
@@ -25,7 +26,7 @@ class SkiGameManager(
 
     private var lives = initialLives
     //private var survivalPoints = 0
-    var coinValue = 10
+    var coinValue = GameConfig.COIN_VALUE
         private  set
     private var coins = 0
     private var distance = 0
@@ -48,6 +49,10 @@ class SkiGameManager(
         if (playerLane < lastLaneIndex) {
             playerLane++
         }
+    }
+
+    fun movePlayerToLane(lane: Int) {
+        playerLane = lane.coerceIn(0, numCols - 1)
     }
 
     /**
@@ -90,7 +95,6 @@ class SkiGameManager(
     }
 
     //Checks collision on the last row and updates lives/score.
-
     private fun checkCollision(): TickResult {
         val lastRowIndex = numRows - 1
         val cell = map[lastRowIndex][playerLane]
@@ -111,7 +115,6 @@ class SkiGameManager(
 
             CellType.COIN -> {
                 //Every tick we get a point
-                //survivalPoints++
                 //Player collects a coin
                 coins++
                 //Clean cell in the map
@@ -121,23 +124,8 @@ class SkiGameManager(
 
             CellType.EMPTY -> {
                 //We didnt hit obstacle or coin
-                //survivalPoints++
                 TickResult.NONE
             }
         }
     }
-
-    fun reset() {
-        for (row in 0 until numRows) {
-            for (col in 0 until numCols) {
-                map[row][col] = CellType.EMPTY
-            }
-        }
-
-        lives = initialLives
-        distance = 0
-        coins = 0
-        playerLane = numCols / 2
-    }
 }
-

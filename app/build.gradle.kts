@@ -17,6 +17,9 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+        val mapsApiKey = (project.findProperty("MAPS_API_KEY") as String?) ?: ""
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -61,4 +64,5 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation("androidx.core:core-ktx:1.12.0")
 }

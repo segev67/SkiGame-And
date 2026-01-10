@@ -77,13 +77,16 @@ class ScoreMapFragment : Fragment(), OnMapReadyCallback {
     }
 
     override fun onDestroyView() {
-
-        // Properly destroy MapView to avoid memory leaks
         mapView.onDestroy()
-
+        googleMap = null
         _binding = null
         super.onDestroyView()
     }
+
+//    override fun onDestroy() {
+//        mapView.onDestroy()
+//        super.onDestroy()
+//    }
 
     override fun onLowMemory() {
         super.onLowMemory()
@@ -93,7 +96,7 @@ class ScoreMapFragment : Fragment(), OnMapReadyCallback {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
 
-        // Save map instance state
+        //Save map instance state
         mapView.onSaveInstanceState(outState)
     }
 

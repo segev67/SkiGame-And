@@ -1,30 +1,30 @@
 package com.example.homework1
+import com.example.homework1.utilities.SensorConfig
+import com.example.homework1.utilities.GameConfig
 
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.widget.Button
-import android.widget.TextView
 import android.view.View
 import android.widget.Toast
 import android.widget.ImageView
 import android.content.Intent
-import androidx.appcompat.app.AlertDialog
+import com.example.homework1.interfaces.TiltCallback
+import com.example.homework1.utilities.TiltDetector
 import androidx.appcompat.app.AppCompatActivity
 import com.example.homework1.databinding.ActivityMainBinding
-import android.Manifest
-import android.annotation.SuppressLint
-import android.content.pm.PackageManager
-import androidx.core.app.ActivityCompat
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
+import com.example.homework1.utilities.GameUiUpdater
 
 
 class MainActivity : AppCompatActivity() {
 
-    companion object {
-        private var gameTickMillis: Long = 1000L  //one second per tick
-    }
+    private var gameTickMillis = GameConfig.TICK_SLOW_MS
+    private var baseTickMillis = gameTickMillis
+
+    private var isSpeedBoosted: Boolean = false
+    private var lastY: Float = 0f
+    private var tiltDirection: Int = 0   // range [-1,1]
+    private var lastTiltTime: Long = 0L
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var gameManager: SkiGameManager
@@ -35,10 +35,10 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var handler: Handler
     private lateinit var gameMode: GameMode
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private var isGameRunning = false
+    private var isGameOver = false
 
-    private var pendingScoreToSave: Pair<Int, Int>? = null // (score, distance)
-
+    private lateinit var tiltDetector: TiltDetector
     private val gameLoop = object : Runnable {
         override fun run() {
             val result = gameManager.tick()
@@ -55,21 +55,26 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 TickResult.GAME_OVER -> {
-                    //Game over, compute final stats
+                    isGameOver = true
+                    stopGameLoop()
+
                     val finalScore = gameManager.getScore()
                     val finalDistance = gameManager.getDistance()
 
-                    saveScoreWithLocation(finalScore, finalDistance)
+                    val intent = Intent(this@MainActivity, FinalScoreActivity::class.java).apply {
+                        putExtra(FinalScoreActivity.EXTRA_SCORE, finalScore)
+                        putExtra(FinalScoreActivity.EXTRA_DISTANCE, finalDistance)
+                        putExtra(FinalScoreActivity.EXTRA_GAME_MODE, gameMode.name)
+                    }
 
-                    //Show game over dialog
-                    showGameOverDialog(finalScore, finalDistance)
+                    startActivity(intent)
+                    finish()
+                    return
                 }
             }
 
             //Only continue the loop if the game is not over
-            if (result != TickResult.GAME_OVER) {
-                handler.postDelayed(this, gameTickMillis)
-            }
+            handler.postDelayed(this, gameTickMillis)
         }
     }
 
@@ -80,7 +85,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         handler = Handler(Looper.getMainLooper())
 
         initViews()
@@ -89,12 +93,15 @@ class MainActivity : AppCompatActivity() {
         val modeFromIntent = intent.getStringExtra("GAME_MODE") ?: GameMode.BUTTON_SLOW.name
         gameMode = GameMode.valueOf(modeFromIntent)
 
+        initTiltDetector()
+
         //Set tick speed according to game mode
         gameTickMillis = when (gameMode) {
-            GameMode.BUTTON_SLOW -> 1000L   // slow
-            GameMode.BUTTON_FAST -> 500L    // fast
-            GameMode.SENSOR      -> 800L
+            GameMode.BUTTON_SLOW -> GameConfig.TICK_SLOW_MS
+            GameMode.BUTTON_FAST -> GameConfig.TICK_FAST_MS
+            GameMode.SENSOR      -> GameConfig.TICK_SENSOR_MS
         }
+        baseTickMillis = gameTickMillis
 
         //(Sensor logic will be added later)
         if (gameMode == GameMode.SENSOR) {
@@ -115,17 +122,17 @@ class MainActivity : AppCompatActivity() {
             initialLives = initialLives
         )
 
-        Utils.clearTrees(treeViews)
-        Utils.updateSkier(skierViews, gameManager.getPlayerLane())
-        Utils.updateHearts(heartViews, gameManager.getLives())
-        Utils.updateScore(binding.txtScore, gameManager.getScore())
-        Utils.updateOdometer(binding.txtOdometer, gameManager.getDistance())
+        GameUiUpdater.clearTrees(treeViews)
+        GameUiUpdater.updateSkier(skierViews, gameManager.getPlayerLane())
+        GameUiUpdater.updateHearts(heartViews, gameManager.getLives())
+        GameUiUpdater.updateScore(binding.txtScore, gameManager.getScore())
+        GameUiUpdater.updateOdometer(binding.txtOdometer, gameManager.getDistance())
 
         // Left button (buttons mode only)
         binding.btnLeft.setOnClickListener {
             if (gameMode != GameMode.SENSOR) {
                 gameManager.movePlayerLeft()
-                Utils.updateSkier(skierViews, gameManager.getPlayerLane())
+                GameUiUpdater.updateSkier(skierViews, gameManager.getPlayerLane())
             }
         }
 
@@ -133,7 +140,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnRight.setOnClickListener {
             if (gameMode != GameMode.SENSOR) {
                 gameManager.movePlayerRight()
-                Utils.updateSkier(skierViews, gameManager.getPlayerLane())
+                GameUiUpdater.updateSkier(skierViews, gameManager.getPlayerLane())
             }
         }
 
@@ -141,23 +148,50 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        stopGameLoop()
+
+        if (gameMode == GameMode.SENSOR) {
+            tiltDetector.stop()
+        }
+
         super.onDestroy()
-        handler.removeCallbacks(gameLoop)
     }
 
     override fun onPause() {
+        stopGameLoop()
+
+        //Stop sensors when leaving the screen
+        if (gameMode == GameMode.SENSOR) {
+            tiltDetector.stop()
+        }
+
         super.onPause()
-        handler.removeCallbacks(gameLoop)
     }
 
-//    override fun onResume() {
-//        super.onResume()
-//        startGameLoop()
-//    }
+    override fun onResume() {
+        super.onResume()
+
+        //Start sensors when returning to the screen
+        if (gameMode == GameMode.SENSOR && !isGameOver) {
+            tiltDetector.start()
+        }
+
+        startGameLoop()
+    }
 
     private fun startGameLoop() {
+        if (isGameRunning || isGameOver)
+            return
+
+        isGameRunning = true
         handler.removeCallbacks(gameLoop)
         handler.postDelayed(gameLoop, gameTickMillis)
+    }
+
+    private fun stopGameLoop() {
+        //Stop ticks and mark game as not running
+        isGameRunning = false
+        handler.removeCallbacks(gameLoop)
     }
 
     private fun initViews() {
@@ -188,144 +222,73 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateUi() {
-        Utils.updateTrees(treeViews, gameManager.getMap())
-        Utils.updateSkier(skierViews, gameManager.getPlayerLane())
-        Utils.updateHearts(heartViews, gameManager.getLives())
-        Utils.updateScore(binding.txtScore, gameManager.getScore())
-        Utils.updateOdometer(binding.txtOdometer, gameManager.getDistance())
+        GameUiUpdater.updateTrees(treeViews, gameManager.getMap())
+        GameUiUpdater.updateSkier(skierViews, gameManager.getPlayerLane())
+        GameUiUpdater.updateHearts(heartViews, gameManager.getLives())
+        GameUiUpdater.updateScore(binding.txtScore, gameManager.getScore())
+        GameUiUpdater.updateOdometer(binding.txtOdometer, gameManager.getDistance())
     }
 
-    private fun showGameOverDialog(finalScore: Int, finalDistance: Int) {
-        // Get best score from repository
-        val scores = TopScoresRepository.getScores(this)
-        val bestScore = scores.maxOfOrNull { it.score } ?: finalScore
+    private fun initTiltDetector() {
+        tiltDetector = TiltDetector(
+            this,
+            object : TiltCallback {
+                override fun onSensorData(x: Float, y: Float, z: Float) {
+                    if (gameMode != GameMode.SENSOR || isGameOver || !isGameRunning) return
 
-        //Inflate custom layout for the dialog
-        val dialogView = layoutInflater.inflate(R.layout.game_over, null)
+                    val numCols = treeViews[0].size  // should be 5 in your game
 
-        val txtTitle = dialogView.findViewById<TextView>(R.id.txtGameOverTitle)
-        val txtFinalScore = dialogView.findViewById<TextView>(R.id.txtFinalScore)
-        val txtBestScore = dialogView.findViewById<TextView>(R.id.txtBestScore)
-        val txtDistance = dialogView.findViewById<TextView>(R.id.txtDistance)
-        val btnPlayAgain = dialogView.findViewById<Button>(R.id.btnPlayAgain)
-        val btnTopScores = dialogView.findViewById<Button>(R.id.btnTopScores)
-        val btnBackToMenu = dialogView.findViewById<Button>(R.id.btnBackToMenu)
+                    //Normalize X to [0..1]
+                    val normalizedX = ((x + SensorConfig.MAX_TILT) / (2f * SensorConfig.MAX_TILT))
+                        .coerceIn(0f, 1f)
 
-        //Set texts
-        txtTitle.text = "Game Over"
-        txtFinalScore.text = "Your score: $finalScore"
-        txtBestScore.text = "Best score: $bestScore"
-        txtDistance.text = "Distance: $finalDistance"
+                    //Map to lane index [0..4]
+                    val targetLane = (normalizedX * (numCols - 1) + 0.5f)
+                    .toInt()
+                        .coerceIn(0, numCols - 1)
 
-        val dialog = AlertDialog.Builder(this)
-            .setView(dialogView)
-            .setCancelable(false) // user must choose what to do
-            .create()
+                    if (targetLane != gameManager.getPlayerLane()) {
+                        gameManager.movePlayerToLane(targetLane)
+                        GameUiUpdater.updateSkier(skierViews, gameManager.getPlayerLane())
+                    }
 
-        //Play again: reset game and restart loop
-        btnPlayAgain.setOnClickListener {
-            dialog.dismiss()
-            gameManager.reset()
-            Utils.clearTrees(treeViews)
-            updateUi()
-            startGameLoop()
-        }
+                    // -------- tilt back and forth for speed (Y axis) --------
+                    val now = System.currentTimeMillis()
+                    val yDiff = y - lastY
 
-        //View top scores: open TopScoresActivity
-        btnTopScores.setOnClickListener {
-            dialog.dismiss()
-            handler.removeCallbacks(gameLoop)
-            val intent = Intent(this, TopScoresActivity::class.java)
-            startActivity(intent)
-        }
+                    //Detect swing
+                    if (kotlin.math.abs(yDiff) > SensorConfig.Y_SWING_THRESHOLD) {
+                        val currentDirection = if (yDiff > 0) 1 else -1
 
-        //Back to main menu: go back to MenuActivity
-        btnBackToMenu.setOnClickListener {
-            dialog.dismiss()
-            handler.removeCallbacks(gameLoop)
-            val intent = Intent(this, MenuActivity::class.java)
-            // Clear this activity from the back stack so back won't return here
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-            startActivity(intent)
-            finish() // finish MainActivity
-        }
+                        //Speed boost triggers on direction change (back-and-forth)
+                        if (currentDirection != tiltDirection && tiltDirection != 0) {
+                            lastTiltTime = now
 
-        dialog.show()
-    }
+                            if (!isSpeedBoosted) {
+                                isSpeedBoosted = true
+                                gameTickMillis = baseTickMillis / SensorConfig.FAST_SPEED_MULTIPLIER
 
-    @SuppressLint("MissingPermission")
-    private fun saveScoreWithLocation(finalScore: Int, finalDistance: Int) {
+                                //Apply immediately
+                                handler.removeCallbacks(gameLoop)
+                                handler.postDelayed(gameLoop, gameTickMillis)
+                            }
+                        }
+                        tiltDirection = currentDirection
+                    }
+                    lastY = y
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            pendingScoreToSave = finalScore to finalDistance
-            requestLocationPermission.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-            return
-        }
+                    //Turn off boost after duration
+                    if (isSpeedBoosted && now - lastTiltTime > SensorConfig.SPEED_BOOST_DURATION_MS) {
+                        isSpeedBoosted = false
+                        gameTickMillis = baseTickMillis
 
-        val tokenSource = com.google.android.gms.tasks.CancellationTokenSource()
-
-        fusedLocationClient.getCurrentLocation(
-            com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY,
-            tokenSource.token
-        ).addOnSuccessListener { location ->
-            val hasLocationFlag = (location != null)
-            val lat = location?.latitude ?: 0.0
-            val lng = location?.longitude ?: 0.0
-
-            // Debug log (important!)
-            android.util.Log.d("LOC", "getCurrentLocation lat=$lat lng=$lng has=$hasLocationFlag")
-
-            TopScoresRepository.addScore(
-                context = this,
-                playerName = "Player",
-                score = finalScore,
-                distance = finalDistance,
-                latitude = lat,
-                longitude = lng,
-                hasLocation = hasLocationFlag
-            )
-        }.addOnFailureListener { e ->
-            android.util.Log.e("LOC", "getCurrentLocation failed", e)
-
-            TopScoresRepository.addScore(
-                context = this,
-                playerName = "Player",
-                score = finalScore,
-                distance = finalDistance,
-                latitude = 0.0,
-                longitude = 0.0,
-                hasLocation = false
-            )
-        }
-    }
-
-    private val requestLocationPermission =
-        registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { granted ->
-
-            val pending = pendingScoreToSave
-            pendingScoreToSave = null
-
-            if (pending == null) return@registerForActivityResult
-
-            val (score, distance) = pending
-
-            if (granted) {
-                //Permission granted
-                saveScoreWithLocation(score, distance)
-            } else {
-                //Permission denied, saving without location
-                TopScoresRepository.addScore(
-                    context = this,
-                    playerName = "Player",
-                    score = score,
-                    distance = distance,
-                    latitude = 0.0,
-                    longitude = 0.0,
-                    hasLocation = false
-                )
+                        //Apply immediately
+                        handler.removeCallbacks(gameLoop)
+                        handler.postDelayed(gameLoop, gameTickMillis)
+                    }
+                }
             }
-        }
+        )
+    }
 }
 

@@ -3,9 +3,9 @@ package com.example.homework1
 import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
+import androidx.core.content.edit
 
 object TopScoresRepository {
-
     private const val PREF_NAME = "top_scores_prefs"
     private const val KEY_SCORES = "scores_json"
     private const val MAX_SCORES = 10
@@ -64,13 +64,12 @@ object TopScoresRepository {
             currentScores.add(newScore)
         } else {
             //We already have MAX_SCORES entries
-            //Find the weakest score (last one because list is sorted descending)
-            val weakest = currentScores.last()
+            //Find the lowest score (last one because list is sorted descending)
+            val lowest = currentScores.last()
 
-            //If new score is not better than the weakest, do nothing
+            //If new score is not better than the lowest, do nothing
             val isBetter =
-                newScore.score > weakest.score //||
-                        //(newScore.score == weakest.score && newScore.distance > weakest.distance)
+                newScore.score > lowest.score
 
             if (!isBetter) {
                 //Do not change the list at all
@@ -107,11 +106,13 @@ object TopScoresRepository {
                 put("longitude", s.longitude)
                 put("hasLocation", s.hasLocation)
             }
-            array.put(obj)
+            array.apply {
+                put(obj)
+            }
         }
 
-        prefs.edit()
-            .putString(KEY_SCORES, array.toString())
-            .apply()
+        prefs.edit {
+            putString(KEY_SCORES, array.toString())
+        }
     }
 }

@@ -1,5 +1,5 @@
 package com.example.homework1
-
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -12,12 +12,20 @@ import com.example.homework1.interfaces.Callback_TopScoreClicked
 
 class ScoreListFragment : Fragment() {
 
-    companion object {
-        var topScoreItemClicked: Callback_TopScoreClicked? = null
-    }
-
+    private var callback: Callback_TopScoreClicked? = null
     private lateinit var listView: ListView
     private var scores: List<TopScore> = emptyList()
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        // Host activity must implement the interface
+        callback = context as? Callback_TopScoreClicked
+    }
+
+    override fun onDetach() {
+        callback = null
+        super.onDetach()
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -54,7 +62,7 @@ class ScoreListFragment : Fragment() {
                 val score = scores[position]
 
                 //Trigger callback (notify activity)
-                topScoreItemClicked?.topScoreItemClicked(score)
+                callback?.topScoreItemClicked(score)
             }
 
     }

@@ -1,11 +1,12 @@
-package com.example.homework1
+package com.example.homework1.utilities
 
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import com.example.homework1.CellType
+import com.example.homework1.R
 
-
-object Utils {
+object GameUiUpdater {
 
     fun clearTrees(treeViews: Array<Array<ImageView>>) {
         for (row in treeViews) {
@@ -62,17 +63,11 @@ object Utils {
         }
     }
 
-    fun updateScore(
-        scoreView: TextView,
-        score: Int
-    ) {
-        scoreView.text = "Score: $score"
+    fun updateScore(scoreView: TextView, score: Int) {
+        scoreView.text = scoreView.context.getString(R.string.current_score, score)
     }
 
-    fun updateOdometer(
-        odometerView: TextView,
-        distance: Int
-    ) {
-        odometerView.text = "Distance: $distance"
+    fun updateOdometer(odometerView: TextView, distance: Int) {
+        odometerView.text = odometerView.context.getString(R.string.distance, distance)
     }
 }
